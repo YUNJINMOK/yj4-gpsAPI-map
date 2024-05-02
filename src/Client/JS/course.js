@@ -6,6 +6,37 @@ let userLongitude;
 let isMapDrawn = false;
 let courseData = [];
 let markers = [];
+let clickCourse = 0;
+
+const panTo = (latitude, longitude) => {
+  const position = new kakao.maps.LatLng(latitude, longitude);
+  map.panTo(position);
+};
+
+const clickCourseList = (e, courseNo) => {
+  if (clickCourse !== courseNo) {
+    const courseWrap = document.querySelectorAll(".course");
+    for (let i = 0; i < courseWrap.length; i++) {
+      courseWrap[i].classList.remove("on");
+    }
+    // 클릭한 애 색칠
+    e.currentTarget.classList.add("on");
+
+    let courseLatitude;
+    let courseLongitude;
+
+    if (courseNo == 0) {
+      courseLatitude = userLatitude;
+      courseLongitude = userLongitude;
+    } else {
+      const matchCourse = courseData.find((c) => c.course_no === courseNo);
+      courseLatitude = matchCourse.course_latitude;
+      courseLongitude = matchCourse.course_longitude;
+    }
+    panTo(courseLatitude, courseLongitude);
+    clickCourse = courseNo;
+  }
+};
 
 // 마커를 그리는 함수
 const addMarkers = (position) => {
@@ -13,11 +44,11 @@ const addMarkers = (position) => {
     position: position,
   });
   marker.setMap(map);
-  marker.push(marker);
+  markers.push(marker);
 };
 // 마커를 지우는 함수
 const delMarker = () => {
-  for (let i = 0; i < marker.length; i++) {
+  for (let i = 0; i < markers.length; i++) {
     markers[i].setMap(null);
   }
   markers = [];
@@ -62,9 +93,9 @@ const drawMap = (latitude, longitude) => {
 const configLocation = () => {
   if (navigator.geolocation) {
     navigator.geolocation.watchPosition((pos) => {
+      delMarker();
       userLatitude = pos.coords.latitude;
       userLongitude = pos.coords.longitude;
-
       if (!isMapDrawn) {
         drawMap(userLatitude, userLongitude);
         setCourseMarker();
@@ -80,11 +111,11 @@ const makeCourseNaviHTML = (data) => {
   const courseWrap = document.getElementById("courseWrap");
   let html = "";
   for (let i = 0; i < data.length; i++) {
-    html += `<li class='course'>`;
+    html += `<li class='course' onclick="clickCourseList(event,${data[i].course_no})">`;
     html += `<p>${data[i].course_name}</p>`;
     html += `</li>`;
   }
-  html += `<li id="myPosition" class="course on">나의 위치 </li>`;
+  html += `<li id="myPosition" class="course on" onclick="clickCourseList(event,0)">나의 위치 </li>`;
   courseWrap.innerHTML = html;
 };
 
