@@ -13,7 +13,7 @@ import { joinUser, loginUser } from "./controller/authController.js";
 import { neededAuth, notNeededAuth } from "./middleware/auth.js";
 
 const app = express();
-const PORT = 8001;
+const PORT = 8001; // 포트
 
 // 템플릿 엔진 사용 셋팅
 app.set("view engine", "ejs");
