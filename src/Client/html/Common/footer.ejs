@@ -34,19 +34,14 @@
 </footer>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-  // 현재 페이지의 URL 경로를 가져옵니다.
-  const currentPath = window.location.pathname;
+  document.addEventListener("DOMContentLoaded", () => {
+    const currentPath = window.location.pathname;
+    const links = document.querySelectorAll(".footer ul li a");
 
-  // 모든 footer 내의 a 태그를 선택합니다.
-  const links = document.querySelectorAll(".footer ul li a");
-
-  // 각 a 태그를 순회하면서 href 값이 현재 URL 경로와 일치하는지 확인합니다.
-  links.forEach(link => {
-    if (link.getAttribute("href") === currentPath) {
-      // href 값이 현재 URL과 일치한다면 해당 a 태그의 부모 li에 'on' 클래스를 추가합니다.
-      link.parentElement.classList.add("on");
-    }
+    links.forEach((link) => {
+      if (link.getAttribute("href") === currentPath) {
+        link.parentElement.classList.add("on");
+      }
+    });
   });
-});
 </script>

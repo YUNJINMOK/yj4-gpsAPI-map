@@ -3,10 +3,10 @@ const locationMap = document.getElementById("location-map");
 let map; // 카카오 지도
 let userLatitude;
 let userLongitude;
-let isMapDrawn = false;
+let isMapDrawn = false; // boolean
 let courseData = [];
 let markers = [];
-let clickCourse = 0;
+let clickCourse = 0; // 0 내자신으로, 나머지는 id
 
 const panTo = (latitude, longitude) => {
   const position = new kakao.maps.LatLng(latitude, longitude);
@@ -22,10 +22,11 @@ const clickCourseList = (e, courseNo) => {
     // 클릭한 애 색칠
     e.currentTarget.classList.add("on");
 
+    // 더해야합니다.
     let courseLatitude;
     let courseLongitude;
 
-    if (courseNo == 0) {
+    if (courseNo === 0) {
       courseLatitude = userLatitude;
       courseLongitude = userLongitude;
     } else {
@@ -33,19 +34,22 @@ const clickCourseList = (e, courseNo) => {
       courseLatitude = matchCourse.course_latitude;
       courseLongitude = matchCourse.course_longitude;
     }
+
     panTo(courseLatitude, courseLongitude);
+
     clickCourse = courseNo;
   }
 };
 
 // 마커를 그리는 함수
-const addMarkers = (position) => {
+const addMarker = (position) => {
   let marker = new kakao.maps.Marker({
     position: position,
   });
   marker.setMap(map);
   markers.push(marker);
 };
+
 // 마커를 지우는 함수
 const delMarker = () => {
   for (let i = 0; i < markers.length; i++) {
@@ -57,19 +61,23 @@ const delMarker = () => {
 const addCourseMarker = (course) => {
   let markerImageUrl = "/file/map_not_done.png";
   let markerImageSize = new kakao.maps.Size(24, 35);
+  if (course.user_courses_no) {
+    markerImageUrl = "/file/map_complete.jpg";
+    markerImageSize = new kakao.maps.Size(25, 35);
+  }
+
   const kakaoMarkerImage = new kakao.maps.MarkerImage(
     markerImageUrl,
     markerImageSize
   );
-
-  const LatLng = new kakao.maps.LatLng(
+  const latlng = new kakao.maps.LatLng(
     course.course_latitude,
     course.course_longitude
   );
 
   new kakao.maps.Marker({
     map: map,
-    position: LatLng,
+    position: latlng,
     title: course.course_name,
     image: kakaoMarkerImage,
   });
@@ -82,11 +90,11 @@ const setCourseMarker = () => {
 };
 
 const drawMap = (latitude, longitude) => {
-  // 1번쨰 인자: 지도그릴 DOM
-  map = new kakao.maps.Map(locationMap, {
+  const option = {
     center: new kakao.maps.LatLng(latitude, longitude),
     level: 2,
-  });
+  };
+  map = new kakao.maps.Map(locationMap, option);
   map.setZoomable(false);
 };
 
@@ -101,30 +109,42 @@ const configLocation = () => {
         setCourseMarker();
         isMapDrawn = true;
       }
-
-      addMarkers(new kakao.maps.LatLng(userLatitude, userLongitude));
+      addMarker(new kakao.maps.LatLng(userLatitude, userLongitude));
+      if (clickCourse === 0) {
+        panTo(userLatitude, userLongitude);
+      }
     });
   }
 };
 
 const makeCourseNaviHTML = (data) => {
+  console.log(data);
   const courseWrap = document.getElementById("courseWrap");
   let html = "";
   for (let i = 0; i < data.length; i++) {
-    html += `<li class='course' onclick="clickCourseList(event,${data[i].course_no})">`;
+    html += `<li class="course" onclick="clickCourseList(event, ${data[i].course_no})">`;
+    if (data[i].user_courses_no) {
+      html += `<div class="mark-wrap"><img src="/file/complete.png" /></div>`;
+    }
     html += `<p>${data[i].course_name}</p>`;
     html += `</li>`;
   }
-  html += `<li id="myPosition" class="course on" onclick="clickCourseList(event,0)">나의 위치 </li>`;
+  html += `<li id="myPosition" class="course on" onclick="clickCourseList(event, 0)">나의 위치</li>`;
+
   courseWrap.innerHTML = html;
 };
 
+// 코스 데이터를 불러오는 fetch 함수 async - await
 const getCourseList = async () => {
-  const response = await fetch("/api/course");
+  const accessToken = localStorage.getItem("accessToken");
+  const response = await fetch("/api/course", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
   const result = await response.json();
-  courseData = result.data;
-
-  makeCourseNaviHTML(courseData);
+  const data = result.data;
+  courseData = data;
+  makeCourseNaviHTML(data);
   configLocation();
 };
+
 getCourseList();
